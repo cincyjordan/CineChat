@@ -1,0 +1,19 @@
+# PyTorch CUDA 12.8 is the primary index so pip finds the CUDA build of torch
+# before the CPU-only build on PyPI. All other packages fall back to PyPI.
+--index-url https://download.pytorch.org/whl/cu128
+--extra-index-url https://pypi.org/simple
+
+torch
+torchvision
+
+kaggle
+transformers
+datasets
+gradio
+Pillow
+pandas
+scikit-learn
+numpy
+matplotlib
+wandb
+python-dotenv
