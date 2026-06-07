@@ -10,7 +10,21 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+import os
+
+from dotenv import load_dotenv
+
 from load_data import OUTPUT_DIR, find_existing_dataset_root
+
+# Load WANDB_KEY from .env before checking for wandb so login works without
+# requiring the user to set the key manually in their shell environment.
+load_dotenv()
+
+try:
+    import wandb
+    _WANDB_AVAILABLE = True
+except ImportError:
+    _WANDB_AVAILABLE = False
 
 FIELD_SEP = " +++$+++ "
 PROCESSED_DIR = Path("data/processed")
@@ -623,6 +637,35 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Saved pairs to {pairs_jsonl}")
     print(f"Saved tokenized data to {tokenized_dir}")
     print(f"Saved stats to {stats_json}")
+
+    # Log the tokenized dataset as a versioned W&B Artifact. Attaching split
+    # sizes and preprocessing config as metadata means any training run that
+    # calls use_artifact("cornell-tokenized:latest") creates a traceable
+    # data→model lineage edge in the W&B UI without re-uploading the files.
+    if _WANDB_AVAILABLE:
+        _wandb_key = os.getenv("WANDB_KEY")
+        if _wandb_key:
+            wandb.login(key=_wandb_key)
+        with wandb.init(project="cinechat", job_type="preprocess") as run:
+            artifact = wandb.Artifact(
+                name="cornell-tokenized",
+                type="dataset",
+                metadata={
+                    "train": len(train_pairs),
+                    "validation": len(val_pairs),
+                    "test": len(test_pairs),
+                    "max_length": args.max_length,
+                    "context_turns": args.context_turns,
+                    "seed": args.seed,
+                    "val_ratio": args.val_ratio,
+                    "test_ratio": args.test_ratio,
+                    "model_name": args.model_name,
+                },
+            )
+            artifact.add_dir(str(tokenized_dir))
+            run.log_artifact(artifact)
+        print("Logged dataset artifact to W&B.")
+
     return 0
 
 
