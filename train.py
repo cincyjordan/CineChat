@@ -189,6 +189,15 @@ def train(args: argparse.Namespace) -> float:
             args.batch_size = getattr(cfg, "batch_size", args.batch_size)
             args.warmup_steps = getattr(cfg, "warmup_steps", args.warmup_steps)
 
+        # Declare the dataset artifact this run consumed so W&B draws the
+        # data->model lineage edge. Wrapped in try/except so a missing artifact
+        # (e.g. preprocess.py not yet re-run) doesn't abort training.
+        if wandb.run is not None:
+            try:
+                wandb.run.use_artifact("cornell-tokenized:latest")
+            except Exception:
+                pass
+
     tokenizer = load_tokenizer(args.model_name)
     model = load_model(args.model_name, device)
     model.train()
