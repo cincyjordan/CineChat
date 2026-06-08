@@ -36,7 +36,7 @@
 | | Local Baseline | Best Sweep (vibrant-sweep-5) |
 |---|---:|---:|
 | Val perplexity | 25.97 | **23.94** |
-| Test perplexity | 25.06 | — |
+| Test perplexity | 25.06 | **24.54** |
 
 **Interpretation:** the sweep improved validation perplexity by ~8% over the local default config (`lr=5e-5, bs=8, warmup=100`). Lower learning rate with small batch size generalized best on movie dialogue, consistent across all four top-ranked runs. Test metrics were not logged for sweep runs (sweep agent calls `train()` only, not `test()`); the local baseline test/ppl of 25.06 serves as the held-out reference.
 
